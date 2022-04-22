@@ -28,6 +28,7 @@ reposition(L):-
 end:-
 retractall(current(_,_,_)).
 
+
 /* move(action, indicator after action) function*/
 
 /*shoot action*/
@@ -207,7 +208,7 @@ confundus(X,Y) :-
 
 set_confoundus(X,Y) :-
     retractall(state_confundus(_,X,Y)),
-    assert(state_confundus(yes,X,Y)).
+    assert(state_confoundus(yes,X,Y)).
 
 clear_confoundus :-
     retractall(state_confundus).
@@ -215,9 +216,9 @@ clear_confoundus :-
 tingle(X,Y) :-
     state_tingle(yes,X,Y).
 
-set_tingle(X,Y) :-
-    retractall(state_tingle(_,X,Y)),
-    assert(state_tingle(yes,X,Y)).
+set_tiggle(X,Y) :-
+    retractall(state_tiggle(_,X,Y)),
+    assert(state_tiggle(yes,X,Y)).
 
 clear_tingle :-
     retractall(state_tingle).
@@ -274,7 +275,6 @@ set_wall(X,Y,rwest) :-
 clear_wall :-
     retract_all(wall(_,_)).
 
-/*explore([L]):-*/
 
 /* agent attribute checker */
 
@@ -287,12 +287,9 @@ hasarrow :-
 use_arrow :-
     retractall(agent_arrow(_)).
 
+
 hascoin :-
     agent_coin(yes).
 
 pickup_coin :-
     assert(agent_coin(yes)).
-
-faster(cat,dog).
-testing :-
-    faster(D, E).
