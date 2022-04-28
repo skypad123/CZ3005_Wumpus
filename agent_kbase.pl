@@ -707,6 +707,8 @@ pickup_coin :-
     assert(agent_coins(X_P1)).
 
 
-
+hasarrow :- 
+    agentarrow(X), 
+    ( X > 1 -> true, false ).
 
 
