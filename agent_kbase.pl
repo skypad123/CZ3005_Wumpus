@@ -17,16 +17,19 @@
 reborn :-
     reset_state_memory,
     reset_questitem,
-    set_current(0,0,rnorth).
+    set_current(0,0,rnorth),
+    set_safe(0,0).
 
 /* [[confunded,on],[stench,no],[tingle,no],[glitter,no],[bump,no],[scream,no]] */
 reposition(L):-
     reset_state_memory,
     set_current(0,0,rnorth), 
+    set_safe(0,0),
     /*process_confunded(L),*/
     process_stench(L), 
     process_tingle(L), 
     process_safety(L).
+
 
 end:-
     retractall(current(_,_,_)).
@@ -87,14 +90,14 @@ process_glitter(L):-
 process_bump(L):-
     nth0(4,L,E),
     subprocess(bump,E),
-    ( E = off -> process_stench(L);true),
-    ( E = off -> process_tingle(L);true),
-    ( E = off -> process_safety(L);true).
+    ( E == off -> process_stench(L); R is 1),
+    ( E == off -> process_tingle(L); R is 1),
+    ( E == off -> process_safety(L); R is 1).
 
 process_safety(L):-
     nth0(2,L,B),
     nth0(3,L,C),
-    ( B= off -> (C = off -> mapout_safe;true);true).
+    ( B == off -> (C = off -> mapout_safe;true);true).
 
 /*processing scream indicator*/
 process_scream(L):-
@@ -222,7 +225,7 @@ turnr(X,Y,rwest) :-
 reset_state_memory :-
     clear_visited,
     clear_wumpus,
-    clear_confoundus,
+    clear_confundus,
     clear_tingle,
     clear_glitter,
     clear_stench,
@@ -262,11 +265,11 @@ confundus(X,Y) :-
 confundus(X,Y) :-
     state_realconfundus(X,Y).
 
-set_confoundus(X,Y) :-
+set_confundus(X,Y) :-
     retractall(state_confundus(X,Y)),
     assert(state_confundus(X,Y)).
 
-clear_confoundus :-
+clear_confundus :-
     retractall(state_confundus(_,_)).
 
 /*tingle*/
@@ -326,13 +329,11 @@ set_wall(X,Y,rsouth) :-
     assert(state_wall(X,Y_N1)).
 set_wall(X,Y,reast) :-
     X_P1 is X+1,
-    X_N1 is X-1,
     clear_assumption(X_P1,Y),
     assert(state_wall(X_P1,Y)).
 set_wall(X,Y,rwest) :-
-    X_P1 is X+1,
     X_N1 is X-1,
-    clear_assumption(X-N1,Y),
+    clear_assumption(X_N1,Y),
     assert(state_wall(X_N1,Y)).
 
 clear_wall :-
@@ -360,7 +361,7 @@ clear_realwumpus:-
 /*for the confirmed confoundus*/
 realconfundus(X,Y) :-
     state_realconfundus(X,Y).
-set_realconfoundus(X,Y) :-
+set_realconfundus(X,Y) :-
     assert(state_realconfundus(X,Y)).
 clear_realconfundus :-
     retractall(state_realconfundus(_,_)).
@@ -380,12 +381,116 @@ set_current(X,Y,D) :-
     assert(current(X,Y,D)),
     set_visited(X,Y).
 
-/*explore([L]):-*/
+/* for explore(L) only */
+explore(L):-
+    retractall(fakecurrent(_,_,_)),
+    checkexplore(L).
+
+checkexplore(L) :-
+    (\+ fakecurrent(_,_,_) ->
+        current(X1,Y1,D1),
+        assert(fakecurrent(X1,Y1,D1))
+        ; 
+        true
+    ), 
+    nth0(0,L,F,T),
+    doaction(F),
+    /*is current state safe*/
+    checkexplore_safe,
+    /*is tail the end, if so check if we are at destination*/
+    checkexplore_end(T).
+
+    
+checkexplore_safe:-
+    fakecurrent(X,Y,_),
+    call(safe(X,Y)).
+
+checkexplore_end(Tail):-
+    length(Tail,Taillength),
+    ( Taillength == 0 ->
+        fakecurrent(X2,Y2,_), 
+        is_destination(X2,Y2)
+        ;
+        checkexplore(Tail)
+    ).
+
+shift_fakecurrent(X,Y,D) :-
+    retractall(fakecurrent(_,_,_)),
+    assert(fakecurrent(X,Y,D)).
+
+doaction(moveforward):- 
+    fakecurrent(_,_,D),
+    fwdaction(D).
+    
+doaction(turnleft):-
+    fakecurrent(_,_,D),
+    turnlaction(D).
+    
+doaction(turnright):-
+    fakecurrent(_,_,D),
+    turnraction(D).
 
 
+doaction(shoot).
+doaction(pickup).
+fwdaction(rnorth):-
+    fakecurrent(X,Y,D),
+    Y_P1 is Y+1,
+    shift_fakecurrent(X,Y_P1,D).
+
+fwdaction(rsouth):-
+    fakecurrent(X,Y,D),
+    Y_N1 is Y-1,
+    shift_fakecurrent(X,Y_N1,D).
+
+fwdaction(reast):-
+    fakecurrent(X,Y,D),
+    X_P1 is X+1,
+    shift_fakecurrent(X_P1,Y,D).
+
+fwdaction(rwest):-
+    fakecurrent(X,Y,D),
+    X_N1 is X+1,
+    shift_fakecurrent(X_N1,Y,D).
 
 
+turnlaction(rnorth):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,rwest).
 
+turnlaction(rsouth):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,reast).
+
+turnlaction(reast):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,rnorth).
+
+turnlaction(rwest):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,rsouth).
+
+turnraction(rnorth):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,reast).
+
+turnraction(rsouth):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,rwest).
+
+turnraction(reast):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,rsouth).
+
+turnraction(rwest):-
+    fakecurrent(X,Y,_),
+    shift_fakecurrent(X,Y,rnorth).
+
+
+is_destination(X,Y) :- safe(X,Y),\+ visited(X,Y).
+is_destination(0,0).
+
+/* for explore(L) only */
 
 /*call after all the blockout*/
 mapout_safe :-
@@ -400,8 +505,7 @@ mapout_safe :-
     find_safe(X,Y_N1).
     
 find_safe(X,Y) :-
-    (non-assumable(X,Y) -> true; set_safe(X,Y)).
-
+    ( non-assumable(X,Y) -> true; set_safe(X,Y)).
 
 /*blockout_Wumpus*/
 blockout_wumpus :-
@@ -412,13 +516,12 @@ do_guess_wumpus :-
     current(X,Y,D),
     guess_surround_wumpus(X,Y,D),
     aggregate_all(count, realwumpus(_,_), C),
-    ( C > 0 -> clear_wumpus;true).
+    ( C > 0 -> clear_wumpus; true).
 
 guess_surround_wumpus(X,Y,rnorth):-
     X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
-    Y_N1 is Y-1,
     find_wumpus(X_N1,Y),
     find_wumpus(X,Y_P1),
     find_wumpus(X_P1,Y).
@@ -426,7 +529,6 @@ guess_surround_wumpus(X,Y,rnorth):-
 guess_surround_wumpus(X,Y,rsouth):-
     X_P1 is X+1,
     X_N1 is X-1,
-    Y_P1 is Y+1,
     Y_N1 is Y-1,
     find_wumpus(X_P1,Y),
     find_wumpus(X,Y_N1),
@@ -434,7 +536,6 @@ guess_surround_wumpus(X,Y,rsouth):-
 
 guess_surround_wumpus(X,Y,reast):-
     X_P1 is X+1,
-    X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
     find_wumpus(X,Y_P1),
@@ -442,7 +543,6 @@ guess_surround_wumpus(X,Y,reast):-
     find_wumpus(X,Y_N1).
 
 guess_surround_wumpus(X,Y,rwest):-
-    X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
@@ -466,15 +566,13 @@ clear_surround_wumpus(X,Y,rnorth) :-
     X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
-    Y_N1 is Y-1,
     retractall(state_wumpus(X_N1,Y)),
     retractall(state_wumpus(X,Y_P1)),
-    retractall(state_wumpus(X_N1,Y)).
+    retractall(state_wumpus(X_P1,Y)).
 
 clear_surround_wumpus(X,Y,rsouth) :-
     X_P1 is X+1,
     X_N1 is X-1,
-    Y_P1 is Y+1,
     Y_N1 is Y-1,
     retractall(state_wumpus(X_P1,Y)),
     retractall(state_wumpus(X,Y_N1)),
@@ -482,7 +580,6 @@ clear_surround_wumpus(X,Y,rsouth) :-
 
 clear_surround_wumpus(X,Y,reast) :-    
     X_P1 is X+1,
-    X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
     retractall(state_wumpus(X,Y_P1)),
@@ -490,7 +587,6 @@ clear_surround_wumpus(X,Y,reast) :-
     retractall(state_wumpus(X,Y_N1)).
 
 clear_surround_wumpus(X,Y,rwest) :-
-    X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
@@ -513,15 +609,14 @@ guess_surround_confundus(X,Y,rnorth):-
     X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
-    Y_N1 is Y-1,
+    
     find_confundus(X_N1,Y),
     find_confundus(X,Y_P1),
-    find_confundus(X_P1,Y).
+    find_confundus(X_P1,Y). 
 
 guess_surround_confundus(X,Y,rsouth):-
     X_P1 is X+1,
     X_N1 is X-1,
-    Y_P1 is Y+1,
     Y_N1 is Y-1,
     find_confundus(X_P1,Y),
     find_confundus(X,Y_N1),
@@ -529,15 +624,13 @@ guess_surround_confundus(X,Y,rsouth):-
 
 guess_surround_confundus(X,Y,reast):-
     X_P1 is X+1,
-    X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
     find_confundus(X,Y_P1),
-    find_wumpus(X_P1,Y),
-    find_wumpus(X,Y_N1).
+    find_confundus(X_P1,Y),
+    find_confundus(X,Y_N1).
 
 guess_surround_confundus(X,Y,rwest):-
-    X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
@@ -546,8 +639,9 @@ guess_surround_confundus(X,Y,rwest):-
     find_confundus(X,Y_P1).
 
 find_confundus(X,Y):-
-    (confundus(X,Y) -> set_realconfundus(X,Y); ( non-assumable(X,Y) -> true ; set_confoundus(X,Y) ) ).
-
+    
+   (confundus(X,Y) -> set_realconfundus(X,Y); ( non-assumable(X,Y) -> true ; set_confundus(X,Y) ) ).
+    
 
 /*cleanout confoundus*/
 cleanout_confundus :-    
@@ -562,7 +656,6 @@ clear_surround_confoundus(X,Y,rnorth) :-
     X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
-    Y_N1 is Y-1,
     retractall(state_confoundus(X_N1,Y)),
     retractall(state_confoundus(X,Y_P1)),
     retractall(state_confoundus(X_P1,Y)).
@@ -570,7 +663,6 @@ clear_surround_confoundus(X,Y,rnorth) :-
 clear_surround_confoundus(X,Y,rsouth) :-
     X_P1 is X+1,
     X_N1 is X-1,
-    Y_P1 is Y+1,
     Y_N1 is Y-1,
     retractall(state_confoundus(X_P1,Y)),
     retractall(state_confoundus(X,Y_N1)),
@@ -578,7 +670,6 @@ clear_surround_confoundus(X,Y,rsouth) :-
 
 clear_surround_confoundus(X,Y,reast) :-
     X_P1 is X+1,
-    X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
     retractall(state_confoundus(X,Y_P1)),
@@ -586,7 +677,6 @@ clear_surround_confoundus(X,Y,reast) :-
     retractall(state_confoundus(X,Y_N1)).
 
 clear_surround_confoundus(X,Y,rwest) :-
-    X_P1 is X+1,
     X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
@@ -614,94 +704,7 @@ pickup_coin :-
     retractall(agent_coins(_)), 
     assert(agent_coins(X+1)).
 
-agent_arrow(1).
-agent_coins(0).
-
-
-/* use for path finding */
-
-/*
-init_evalute_env :- */
-    /* for each 
-
-*/ 
-
-/*(X,Y)*/
-node_preference(X,Y,rnorth,L) :-
-    X_P1 is X+1,
-    X_N1 is X-1,
-    Y_P1 is Y+1,
-    Y_N1 is Y-1,
-    L = [safe(X,Y_P1),safe(X_P1,Y),safe(X_N1,Y),safe(X,Y_N1)].
-
-node_preference(X,Y,rsouth,L) :-
-    X_P1 is X+1,
-    X_N1 is X-1,
-    Y_P1 is Y+1,
-    Y_N1 is Y-1,
-    L = [safe(X,Y_N1),safe(X_N1,Y),safe(X_P1,Y),safe(X,Y_P1)].
-
-node_preference(X,Y,reast,L) :-
-    X_P1 is X+1,
-    X_N1 is X-1,
-    Y_P1 is Y+1,
-    Y_N1 is Y-1,
-    L = [safe(X_P1,Y),safe(X,Y_P1),safe(X,Y_N1),safe(X_N1,Y)].
-
-node_preference(X,Y,rwest,L) :-
-    X_P1 is X+1,
-    X_N1 is X-1,
-    Y_P1 is Y+1,
-    Y_N1 is Y-1,
-    L = [safe(X_N1,Y),safe(X,Y_N1),safe(X,Y_P1),safe(X_P1,Y)].
-
-/*
-node_preference(rsouth,[(0,-1),(-1,0),(1,0),(0,1)]).
-
-node_preference(reast,[(1,0),(0,1),(0,-1),(-1,0)]).
-
-node_preference(rwest,[(-1,0),(,0,-1),(0,1),(1,0)]).
-
-*/
-
-init_pathQ() :-
-    retractall(pathQ(_)), 
-    assert(pathQ([])).
-
-append_pathQ(A) :-
-    pathQ(L),
-    append(L,A,R),
-    retractall(pathQ(_)),
-    assert(pathQ(R)).
-
-pop_pathQ(A) :- 
-    pathQ(L),
-    nth0(0, L, A, R),
-    retractall(pathQ(_)),
-    assert(pathQ(R)).
-
-/*
-[Where(X,Y,D), [is_safe(X,Y_P1]]
-
-find_raw_path(Where,Safe) :-
-
-*/
 
 
 
 
-
-
-/*
-A is safe(0,0),
-call(A).
-*/
-is_safe(1,0).
-is_safe(0,1).
-is_safe(-1,0).
-/*
-plore:- 
-    safe(X,Y), 
-    not(visited(X,Y))*/
-
-/* to be implemented */

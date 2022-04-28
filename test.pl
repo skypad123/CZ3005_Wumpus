@@ -1,3 +1,5 @@
+
+a(1,1).
 a(1,2).
 a(1,3).
 a(1,4).
@@ -6,20 +8,14 @@ a(1,5).
 b(1,3).
 b(1,4).
 b(1,5).
+b(2,4).
+b(2,5).
 
 c(X,Y):- 
     a(X,Y),
-    not(b(X,Y)).
+    \+ b(X,Y).
 
 
+d(I,X,Y):-
+    I(X,Y).
 
-init :-
-    current(X,Y,D), 
-    assert(temp(X,Y,D)),
-    newsteps(X,Y)
-
-nextstep :-
-    nextstep(X+1,Y), 
-    nextstep(X+1,Y), 
-    nextstep(X+1,Y), 
-    nextstep(X+1,Y), 
