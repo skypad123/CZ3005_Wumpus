@@ -90,9 +90,9 @@ process_glitter(L):-
 process_bump(L):-
     nth0(4,L,E),
     subprocess(bump,E),
-    ( E == off -> process_stench(L); R is 1),
-    ( E == off -> process_tingle(L); R is 1),
-    ( E == off -> process_safety(L); R is 1).
+    ( E == off -> process_stench(L); true),
+    ( E == off -> process_tingle(L); true),
+    ( E == off -> process_safety(L); true).
 
 process_safety(L):-
     nth0(2,L,B),
@@ -697,12 +697,14 @@ reset_questitem:-
 use_arrow :-
     agent_arrow(X), 
     retractall(agent_arrow(_)), 
-    assert(agent_arrow(X+1)).
+    X_N1 is X-1,
+    assert(agent_arrow(X_N1)).
 
 pickup_coin :-
     agent_coins(X), 
     retractall(agent_coins(_)), 
-    assert(agent_coins(X+1)).
+    X_P1 is X+1,
+    assert(agent_coins(X_P1)).
 
 
 
