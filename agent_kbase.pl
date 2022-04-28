@@ -487,9 +487,13 @@ turnraction(rwest):-
     shift_fakecurrent(X,Y,rnorth).
 
 
-is_destination(X,Y) :- safe(X,Y),\+ visited(X,Y).
-is_destination(0,0).
+raw_destination(X,Y) :- safe(X,Y),\+ visited(X,Y).
+is_destination(X,Y) :- raw_destination(X,Y).
 
+is_destination(0,0) :- 
+    findall(1,raw_destination(_,_),L),
+    length(L,Length), 
+    (Length > 0 ->true, false).
 /* for explore(L) only */
 
 /*call after all the blockout*/
