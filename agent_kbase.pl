@@ -18,12 +18,14 @@ reborn :-
     reset_state_memory,
     reset_questitem,
     set_current(0,0,rnorth),
+    set_visited(0,0),
     set_safe(0,0).
 
 /* [[confunded,on],[stench,no],[tingle,no],[glitter,no],[bump,no],[scream,no]] */
 reposition(L):-
     reset_state_memory,
-    set_current(0,0,rnorth), 
+    set_current(0,0,rnorth),
+    set_visited(0,0), 
     set_safe(0,0),
     /*process_confunded(L),*/
     process_stench(L), 
@@ -48,7 +50,9 @@ move(moveforward,L) :-
     /* actions if confunded */
     /* process_confunded(L), */
     /* action done regardless */
-    process_bump(L).
+    process_bump(L),
+    current(X,Y,_),
+    set_visited(X,Y).
 
 /* turnleft action */
 move(turnleft,L) :-
@@ -90,6 +94,7 @@ process_glitter(L):-
 process_bump(L):-
     nth0(4,L,E),
     subprocess(bump,E),
+    ( E == off -> process_glitter(L); true),
     ( E == off -> process_stench(L); true),
     ( E == off -> process_tingle(L); true),
     ( E == off -> process_safety(L); true).
@@ -378,8 +383,7 @@ count(P,Count) :-
 /*custom set_current*/
 set_current(X,Y,D) :-
     retractall(current(_,_,_)),
-    assert(current(X,Y,D)),
-    set_visited(X,Y).
+    assert(current(X,Y,D)).
 
 /* for explore(L) only */
 explore(L):-
@@ -513,14 +517,25 @@ find_safe(X,Y) :-
 
 /*blockout_Wumpus*/
 blockout_wumpus :-
-    aggregate_all(count, realwumpus(_,_), C),
-    ( C = 0 -> do_guess_wumpus; true).
+    current(X,Y,_),
+    ( \+ visited(X,Y) ->
+        (
+        aggregate_all(count, realwumpus(_,_), C),
+        ( C = 0 -> do_guess_wumpus; true)
+        );
+        true
+    ).
 
 do_guess_wumpus :-
     current(X,Y,D),
-    guess_surround_wumpus(X,Y,D),
-    aggregate_all(count, realwumpus(_,_), C),
-    ( C > 0 -> clear_wumpus; true).
+    ( \+ visited(X,Y) ->
+        (
+        guess_surround_wumpus(X,Y,D),
+        aggregate_all(count, realwumpus(_,_), C),
+        ( C > 0 -> clear_wumpus; true)
+        );
+        true
+    ).
 
 guess_surround_wumpus(X,Y,rnorth):-
     X_P1 is X+1,
@@ -600,14 +615,25 @@ clear_surround_wumpus(X,Y,rwest) :-
 
 /*blockout confundus*/
 blockout_confundus :-
-    count_realconfundus(C),
-    ( C < 3 -> do_guess_confundus; true).
+    current(X,Y,_),
+    ( \+ visited(X,Y) ->
+        (
+        count_realconfundus(C),
+        ( C < 3 -> do_guess_confundus; true)
+        );
+        true
+    ).
 
 do_guess_confundus :-
     current(X,Y,D),
-    guess_surround_confundus(X,Y,D),
-    count_realconfundus(C),
-    ( C > 3 -> clear_confoundus; true).
+    ( \+ visited(X,Y) ->
+        (
+        guess_surround_confundus(X,Y,D),
+        count_realconfundus(C),
+        ( C > 3 -> clear_confoundus; true)
+        );
+        true
+    ).
 
 guess_surround_confundus(X,Y,rnorth):-
     X_P1 is X+1,
