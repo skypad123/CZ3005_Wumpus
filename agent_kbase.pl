@@ -19,10 +19,12 @@ reborn :-
     reset_questitem,
     set_current(0,0,rnorth),
     set_visited(0,0),
-    set_safe(0,0).
+    set_safe(0,0),
+    say("Agent has been reborn in new envrionment!").
 
 /* [[confunded,on],[stench,no],[tingle,no],[glitter,no],[bump,no],[scream,no]] */
 reposition(L):-
+    say("Agent has been teleport!"),
     reset_state_memory,
     set_current(0,0,rnorth),
     set_visited(0,0), 
@@ -32,6 +34,7 @@ reposition(L):-
     process_stench(L), 
     process_tingle(L), 
     process_safety(L).
+    
 
 
 end:-
@@ -41,6 +44,7 @@ end:-
 
 /*shoot action*/
 move(shoot,L):-
+    say("Agent shoot his arrow. If scream is on, remove wumpus in world."),
     /* shoot the arrow (drop the arrow) */
     use_arrow,
     /* check the for scream */
@@ -67,6 +71,7 @@ move(turnright,L) :-
 
 /* pickup action */
 move(pickup,L) :-
+    say("Agent is picking up coin."),
    pickup_coin.
 
 
@@ -170,18 +175,22 @@ moveforward:-
 
 move(X,Y,rnorth):-
     N is Y + 1,
+    say("Agent is moving forward in relative north direction from Y-axis ~w to ~w.\nAssumptions on world are made.",[Y,N]),
     set_current(X,N,rnorth).
 
 move(X,Y,reast):-
     N is X + 1,
+    say("Agent is moving forward in relative east direction from X-axis ~w to ~w.\nAssumptions on world are made.",[X,N]),
     set_current(N,Y,reast).
 
 move(X,Y,rsouth):-
     N is Y - 1,
+    say("Agent is moving forward in relative south direction from Y-axis ~w to ~w.\nAssumptions on world are made.",[Y,N]),
     set_current(X,N,rsouth).
 
 move(X,Y,rwest):-
     N is X - 1,
+    say("Agent is moving forward in relative west direction from X-axis ~w to ~w.\nAssumptions on world are made.",[X,N]),
     set_current(N,Y,rwest).
 
 /* Movement Logic */
@@ -192,15 +201,19 @@ turnleft:-
     turnl(X,Y,D).
 
 turnl(X,Y,rnorth) :-
+    say("Agent is turning left from ~w to ~w.\n",[rnorth,rwest]),
     assert(current(X,Y,rwest)).
 
 turnl(X,Y,reast) :-
+    say("Agent is turning left from ~w to ~w.\n",[reast,rnorth]),
     assert(current(X,Y,rnorth)).
 
 turnl(X,Y,rsouth) :-
+    say("Agent is turning left from ~w to ~w.\n",[rsouth,reast]),
     assert(current(X,Y,reast)).
 
 turnl(X,Y,rwest) :-
+    say("Agent is turning left from ~w to ~w.\n",[rwest,rsouth]),
     assert(current(X,Y,rsouth)).
 
 /*turn right*/
@@ -210,15 +223,19 @@ turnright:-
     turnr(X,Y,D).
 
 turnr(X,Y,rnorth) :-
+    say("Agent is turning right from ~w to ~w.\n",[rnorth,reast]),
     assert(current(X,Y,reast)).
 
 turnr(X,Y,reast) :-
+    say("Agent is turning right from ~w to ~w.\n",[reast,rsouth]),
     assert(current(X,Y,rsouth)).
 
 turnr(X,Y,rsouth) :-
+    say("Agent is turning right from ~w to ~w.\n",[rsouth,rwest]),
     assert(current(X,Y,rwest)).
 
 turnr(X,Y,rwest) :-
+    say("Agent is turning right from ~w to ~w.\n",[rwest,rnorth]),
     assert(current(X,Y,rnorth)).
 
 
@@ -378,9 +395,6 @@ count(P,Count) :-
         findall(1,P,L),
         length(L,Count).
 
-
-
-
 /*custom set_current*/
 set_current(X,Y,D) :-
     retractall(current(_,_,_)),
@@ -494,7 +508,6 @@ turnraction(rwest):-
 
 raw_destination(X,Y) :- safe(X,Y),\+ visited(X,Y).
 is_destination(X,Y) :- raw_destination(X,Y).
-
 is_destination(0,0) :- 
     findall(1,raw_destination(_,_),L),
     length(L,Length), 
@@ -514,7 +527,9 @@ mapout_safe :-
     find_safe(X,Y_N1).
     
 find_safe(X,Y) :-
-    ( non-assumable(X,Y) -> true; set_safe(X,Y)).
+    (non-assumable(X,Y) -> 
+        true; 
+        set_safe(X,Y)).
 
 /*blockout_Wumpus*/
 blockout_wumpus :-
@@ -571,7 +586,11 @@ guess_surround_wumpus(X,Y,rwest):-
     find_wumpus(X,Y_P1).
 
 find_wumpus(X,Y):-
-    ( wumpus(X,Y) -> set_realwumpus(X,Y); ( non-assumable(X,Y) -> true ; set_wumpus(X,Y) ) ).
+    ( wumpus(X,Y) -> 
+        set_realwumpus(X,Y); 
+        ( non-assumable(X,Y) -> 
+            true ; 
+            set_wumpus(X,Y) ) ).
 
 /*cleanout_wumpus*/
 cleanout_wumpus :-
@@ -610,8 +629,11 @@ clear_surround_wumpus(X,Y,rwest) :-
     X_N1 is X-1,
     Y_P1 is Y+1,
     Y_N1 is Y-1,
+    say("Inference: clearing cell(~w,~w) of state_wumpus.\n",[X,Y_N1]),
     retractall(state_wumpus(X,Y_N1)),
+    say("Inference: clearing cell(~w,~w) of state_wumpus.\n",[X_N1,Y]),
     retractall(state_wumpus(X_N1,Y)),
+    say("Inference: clearing cell(~w,~w) of state_wumpus.\n",[X,Y_P1]),
     retractall(state_wumpus(X,Y_P1)).
 
 /*blockout confundus*/
@@ -670,8 +692,11 @@ guess_surround_confundus(X,Y,rwest):-
     find_confundus(X,Y_P1).
 
 find_confundus(X,Y):-
-    
-   (confundus(X,Y) -> set_realconfundus(X,Y); ( non-assumable(X,Y) -> true ; set_confundus(X,Y) ) ).
+   (confundus(X,Y) -> 
+        set_realconfundus(X,Y); 
+        ( non-assumable(X,Y) -> 
+            true; 
+            set_confundus(X,Y) ) ).
     
 
 /*cleanout confoundus*/
@@ -740,6 +765,9 @@ pickup_coin :-
 
 hasarrow :- 
     agentarrow(X), 
-    ( X > 1 -> true, false ).
+    ( X > 0 -> true, false ).
 
 
+say(Lst) :- is_list(Lst), writeln(Lst).
+say(S)   :- say(S,[]).
+say(S,P) :- string_concat(S, '~n', S1), format(S1,P).
