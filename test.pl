@@ -10,3 +10,16 @@ b(1,5).
 c(X,Y):- 
     a(X,Y),
     not(b(X,Y)).
+
+
+
+init :-
+    current(X,Y,D), 
+    assert(temp(X,Y,D)),
+    newsteps(X,Y)
+
+nextstep :-
+    nextstep(X+1,Y), 
+    nextstep(X+1,Y), 
+    nextstep(X+1,Y), 
+    nextstep(X+1,Y), 

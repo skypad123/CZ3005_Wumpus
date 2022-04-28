@@ -19,7 +19,7 @@ reborn :-
     reset_questitem,
     set_current(0,0,rnorth).
 
-/* [[confunded,yes],[stench,no],[tingle,no],[glitter,no],[bump,no],[scream,no]] */
+/* [[confunded,on],[stench,no],[tingle,no],[glitter,no],[bump,no],[scream,no]] */
 reposition(L):-
     reset_state_memory,
     set_current(0,0,rnorth), 
@@ -87,71 +87,71 @@ process_glitter(L):-
 process_bump(L):-
     nth0(4,L,E),
     subprocess(bump,E),
-    ( E = no -> process_stench(L);true),
-    ( E = no -> process_tingle(L);true),
-    ( E = no -> process_safety(L);true).
+    ( E = off -> process_stench(L);true),
+    ( E = off -> process_tingle(L);true),
+    ( E = off -> process_safety(L);true).
 
 process_safety(L):-
     nth0(2,L,B),
     nth0(3,L,C),
-    ( B= no -> (C = no -> mapout_safe;true);true).
+    ( B= off -> (C = off -> mapout_safe;true);true).
 
 /*processing scream indicator*/
 process_scream(L):-
     nth0(5,L,F),
     subprocess(scream,F).
 
-/*check for moveforward (confunded,yes)*/
- /*subprocess(confunded,yes) :-
-    reposition([yes,no,no,no,no,no]). */
+/*check for moveforward (confunded,on)*/
+ /*subprocess(confunded,on) :-
+    reposition([on,no,no,no,no,no]). */
 
 /*placeholder*/
 /*subprocess(confunded,no). */
 
 
 /* for move forward action logic */
-subprocess(stench,yes) :-
+subprocess(stench,on) :-
     current(X,Y,_),
     set_stench(X,Y),
     blockout_wumpus.
 
-subprocess(stench,no) :-
+subprocess(stench,off) :-
     cleanout_wumpus.
 
 /* for move forward action logic */
 /*tbw*/
-subprocess(tingle,yes) :-
+subprocess(tingle,on) :-
     current(X,Y,_),
     set_tingle(X,Y),
     blockout_confundus.
 
-subprocess(tingle,no) :-
+subprocess(tingle,off) :-
     cleanout_confundus.
 
 /* for pickup action only */
-subprocess(glitter,yes) :-
+subprocess(glitter,on) :-
     current(X,Y,_),
     set_glitter(X,Y).
     
 
 /*placeholder*/
-subprocess(glitter,no).
+subprocess(glitter,off).
 
 
 /* check if moveforward hit the wall */
-subprocess(bump,no) :-
+subprocess(bump,off) :-
     moveforward.
 
-subprocess(bump,yes) :-
+subprocess(bump,on) :-
     current(X,Y,D),
     set_wall(X,Y,D).
     
 /* for shoot action only */
-subprocess(scream,yes) :-
+subprocess(scream,on) :-
     clear_realwumpus.
 
 /*placeholder*/
-subprocess(scream,no).
+subprocess(scream,off).
 
 /* Movement Logic */
 moveforward:-
@@ -217,7 +217,7 @@ turnr(X,Y,rwest) :-
 /*Localisation and mapping requirement*/
 /* state attribute checker */
 
-/* assert the state_xxx(yes no,X,Y) */
+/* assert the state_xxx(on no,X,Y) */
 /* call clear_xxx to reset all state_xxx */
 reset_state_memory :-
     clear_visited,
@@ -317,17 +317,23 @@ wall(X,Y) :-
     state_wall(X,Y).
 
 set_wall(X,Y,rnorth) :-
-    clear_assumption(X,Y+1),
-    assert(state_wall(X,Y+1)).
+    Y_P1 is Y+1,
+    clear_assumption(X,Y_P1),
+    assert(state_wall(X,Y_P1)).
 set_wall(X,Y,rsouth) :-
-    clear_assumption(X,Y-1),
-    assert(state_wall(X,Y-1)).
+    Y_N1 is Y-1,
+    clear_assumption(X,Y_N1),
+    assert(state_wall(X,Y_N1)).
 set_wall(X,Y,reast) :-
-    clear_assumption(X+1,Y),
-    assert(state_wall(X+1,Y)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    clear_assumption(X_P1,Y),
+    assert(state_wall(X_P1,Y)).
 set_wall(X,Y,rwest) :-
-    clear_assumption(X-1,Y),
-    assert(state_wall(X-1,Y)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    clear_assumption(X-N1,Y),
+    assert(state_wall(X_N1,Y)).
 
 clear_wall :-
     retractall(state_wall(_,_)).
@@ -376,17 +382,22 @@ set_current(X,Y,D) :-
 
 /*explore([L]):-*/
 
-/* to be implemented */
+
+
 
 
 
 /*call after all the blockout*/
 mapout_safe :-
     current(X,Y,_),
-    find_safe(X+1,Y), 
-    find_safe(X-1,Y),
-    find_safe(X,Y+1), 
-    find_safe(X,Y-1).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_safe(X_P1,Y), 
+    find_safe(X_N1,Y),
+    find_safe(X,Y_P1), 
+    find_safe(X,Y_N1).
     
 find_safe(X,Y) :-
     (non-assumable(X,Y) -> true; set_safe(X,Y)).
@@ -404,24 +415,40 @@ do_guess_wumpus :-
     ( C > 0 -> clear_wumpus;true).
 
 guess_surround_wumpus(X,Y,rnorth):-
-    find_wumpus(X-1,Y),
-    find_wumpus(X,Y+1),
-    find_wumpus(X+1,Y).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_wumpus(X_N1,Y),
+    find_wumpus(X,Y_P1),
+    find_wumpus(X_P1,Y).
 
 guess_surround_wumpus(X,Y,rsouth):-
-    find_wumpus(X+1,Y),
-    find_wumpus(X,Y-1),
-    find_wumpus(X-1,Y).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_wumpus(X_P1,Y),
+    find_wumpus(X,Y_N1),
+    find_wumpus(X_N1,Y).
 
 guess_surround_wumpus(X,Y,reast):-
-    find_wumpus(X,Y+1),
-    find_wumpus(X+1,Y),
-    find_wumpus(X,Y-1).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_wumpus(X,Y_P1),
+    find_wumpus(X_P1,Y),
+    find_wumpus(X,Y_N1).
 
 guess_surround_wumpus(X,Y,rwest):-
-    find_wumpus(X,Y-1),
-    find_wumpus(X-1,Y),
-    find_wumpus(X,Y+1).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_wumpus(X,Y_N1),
+    find_wumpus(X_N1,Y),
+    find_wumpus(X,Y_P1).
 
 find_wumpus(X,Y):-
     ( wumpus(X,Y) -> set_realwumpus(X,Y); ( non-assumable(X,Y) -> true ; set_wumpus(X,Y) ) ).
@@ -436,24 +463,40 @@ do_clear_wumpus :-
     clear_surround_wumpus(X,Y,D).
 
 clear_surround_wumpus(X,Y,rnorth) :-
-    retractall(state_wumpus(X-1,Y)),
-    retractall(state_wumpus(X,Y+1)),
-    retractall(state_wumpus(X+1,Y)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_wumpus(X_N1,Y)),
+    retractall(state_wumpus(X,Y_P1)),
+    retractall(state_wumpus(X_N1,Y)).
 
 clear_surround_wumpus(X,Y,rsouth) :-
-    retractall(state_wumpus(X+1,Y)),
-    retractall(state_wumpus(X,Y-1)),
-    retractall(state_wumpus(X-1,Y)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_wumpus(X_P1,Y)),
+    retractall(state_wumpus(X,Y_N1)),
+    retractall(state_wumpus(X_N1,Y)).
 
-clear_surround_wumpus(X,Y,reast) :-
-    retractall(state_wumpus(X,Y+1)),
-    retractall(state_wumpus(X+1,Y)),
-    retractall(state_wumpus(X,Y-1)).
+clear_surround_wumpus(X,Y,reast) :-    
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_wumpus(X,Y_P1)),
+    retractall(state_wumpus(X_P1,Y)),
+    retractall(state_wumpus(X,Y_N1)).
 
 clear_surround_wumpus(X,Y,rwest) :-
-    retractall(state_wumpus(X,Y-1)),
-    retractall(state_wumpus(X-1,Y)),
-    retractall(state_wumpus(X,Y+1)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_wumpus(X,Y_N1)),
+    retractall(state_wumpus(X_N1,Y)),
+    retractall(state_wumpus(X,Y_P1)).
 
 /*blockout confundus*/
 blockout_confundus :-
@@ -467,24 +510,40 @@ do_guess_confundus :-
     ( C > 3 -> clear_confoundus; true).
 
 guess_surround_confundus(X,Y,rnorth):-
-    find_confundus(X-1,Y),
-    find_confundus(X,Y+1),
-    find_confundus(X+1,Y).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_confundus(X_N1,Y),
+    find_confundus(X,Y_P1),
+    find_confundus(X_P1,Y).
 
 guess_surround_confundus(X,Y,rsouth):-
-    find_confundus(X+1,Y),
-    find_confundus(X,Y-1),
-    find_confundus(X-1,Y).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_confundus(X_P1,Y),
+    find_confundus(X,Y_N1),
+    find_confundus(X_N1,Y).
 
 guess_surround_confundus(X,Y,reast):-
-    find_confundus(X,Y+1),
-    find_wumpus(X+1,Y),
-    find_wumpus(X,Y-1).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_confundus(X,Y_P1),
+    find_wumpus(X_P1,Y),
+    find_wumpus(X,Y_N1).
 
 guess_surround_confundus(X,Y,rwest):-
-    find_confundus(X,Y-1),
-    find_confundus(X-1,Y),
-    find_confundus(X,Y+1).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    find_confundus(X,Y_N1),
+    find_confundus(X_N1,Y),
+    find_confundus(X,Y_P1).
 
 find_confundus(X,Y):-
     (confundus(X,Y) -> set_realconfundus(X,Y); ( non-assumable(X,Y) -> true ; set_confoundus(X,Y) ) ).
@@ -500,24 +559,40 @@ do_clear_confundus :-
     clear_surround_confoundus(X,Y,D).
 
 clear_surround_confoundus(X,Y,rnorth) :-
-    retractall(state_confoundus(X-1,Y)),
-    retractall(state_confoundus(X,Y+1)),
-    retractall(state_confoundus(X+1,Y)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_confoundus(X_N1,Y)),
+    retractall(state_confoundus(X,Y_P1)),
+    retractall(state_confoundus(X_P1,Y)).
 
 clear_surround_confoundus(X,Y,rsouth) :-
-    retractall(state_confoundus(X+1,Y)),
-    retractall(state_confoundus(X,Y-1)),
-    retractall(state_confoundus(X-1,Y)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_confoundus(X_P1,Y)),
+    retractall(state_confoundus(X,Y_N1)),
+    retractall(state_confoundus(X_N1,Y)).
 
 clear_surround_confoundus(X,Y,reast) :-
-    retractall(state_confoundus(X,Y+1)),
-    retractall(state_confoundus(X+1,Y)),
-    retractall(state_confoundus(X,Y-1)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_confoundus(X,Y_P1)),
+    retractall(state_confoundus(X_P1,Y)),
+    retractall(state_confoundus(X,Y_N1)).
 
 clear_surround_confoundus(X,Y,rwest) :-
-    retractall(state_confoundus(X,Y-1)),
-    retractall(state_confoundus(X-1,Y)),
-    retractall(state_confoundus(X,Y+1)).
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    retractall(state_confoundus(X,Y_N1)),
+    retractall(state_confoundus(X_N1,Y)),
+    retractall(state_confoundus(X,Y_P1)).
 
 
 
@@ -541,3 +616,92 @@ pickup_coin :-
 
 agent_arrow(1).
 agent_coins(0).
+
+
+/* use for path finding */
+
+/*
+init_evalute_env :- */
+    /* for each 
+
+*/ 
+
+/*(X,Y)*/
+node_preference(X,Y,rnorth,L) :-
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    L = [safe(X,Y_P1),safe(X_P1,Y),safe(X_N1,Y),safe(X,Y_N1)].
+
+node_preference(X,Y,rsouth,L) :-
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    L = [safe(X,Y_N1),safe(X_N1,Y),safe(X_P1,Y),safe(X,Y_P1)].
+
+node_preference(X,Y,reast,L) :-
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    L = [safe(X_P1,Y),safe(X,Y_P1),safe(X,Y_N1),safe(X_N1,Y)].
+
+node_preference(X,Y,rwest,L) :-
+    X_P1 is X+1,
+    X_N1 is X-1,
+    Y_P1 is Y+1,
+    Y_N1 is Y-1,
+    L = [safe(X_N1,Y),safe(X,Y_N1),safe(X,Y_P1),safe(X_P1,Y)].
+
+/*
+node_preference(rsouth,[(0,-1),(-1,0),(1,0),(0,1)]).
+
+node_preference(reast,[(1,0),(0,1),(0,-1),(-1,0)]).
+
+node_preference(rwest,[(-1,0),(,0,-1),(0,1),(1,0)]).
+
+*/
+
+init_pathQ() :-
+    retractall(pathQ(_)), 
+    assert(pathQ([])).
+
+append_pathQ(A) :-
+    pathQ(L),
+    append(L,A,R),
+    retractall(pathQ(_)),
+    assert(pathQ(R)).
+
+pop_pathQ(A) :- 
+    pathQ(L),
+    nth0(0, L, A, R),
+    retractall(pathQ(_)),
+    assert(pathQ(R)).
+
+/*
+[Where(X,Y,D), [is_safe(X,Y_P1]]
+
+find_raw_path(Where,Safe) :-
+
+*/
+
+
+
+
+
+
+/*
+A is safe(0,0),
+call(A).
+*/
+is_safe(1,0).
+is_safe(0,1).
+is_safe(-1,0).
+/*
+plore:- 
+    safe(X,Y), 
+    not(visited(X,Y))*/
+
+/* to be implemented */
