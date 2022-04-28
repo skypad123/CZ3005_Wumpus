@@ -28,6 +28,7 @@ reposition(L):-
     set_visited(0,0), 
     set_safe(0,0),
     /*process_confunded(L),*/
+    process_glitter(L),
     process_stench(L), 
     process_tingle(L), 
     process_safety(L).
