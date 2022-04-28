@@ -17,12 +17,17 @@ if __name__ == "__main__":
         print("Feedback")
         break
 
-    TestingWorld = [[1,2,3,4,5,6,7],
-                    [2,2,3,4,5,6,7],
-                    [3,2,3,4,5,6,7],
-                    [4,2,3,4,5,6,7],
-                    [5,2,3,4,5,6,7],
-                    [6,2,3,4,5,6,7]]
+    x = 7
+    y = 6
+    #TestingWorld = [[0]*x]*y
+
+    #this is absolute map
+    TestingWorld =  [["#","#","#","#","#","#","#"],
+                    ["#","T","O","W","=","O","#"],
+                    ["#","s","T","=","*","T","#"],
+                    ["#","s","s","T","O","T","#"],
+                    ["#","^","s","s","T","s","#"],
+                    ["#","#","#","#","#","#","#"]]
 
     for row in TestingWorld:
         for col in row:
@@ -41,15 +46,19 @@ if __name__ == "__main__":
     Symbol_Bump = ["B", "."]
     Symbol_Scream = ["@", "."]
     
-    cells = [1,2,3,4,5,6,7,8,9]
+    cells = [["%", "."],["=", "."],["T", "."],["-", " "],["W", "O", "U","^","<",">","v","s", "S","?"],["-", " "],["*", ","],["*", "."],["@", "."]]
+
+    for count, cellNo in enumerate(cells, start=1):
+        print(count, cellNo)
 
 class WumpusWorld(): 
 
     #map of size 7*6 outer cells is wall inner cells got at least 1 coin, 1 agent, 1 wumpus, 3 confundus portals 
-    def __init__(self,Xsize,Ysize):
+    def __init__(self,Xsize = 7,Ysize = 6):
         self.Xsize = Xsize
         self.Ysize = Ysize
-
+        #self.reset =
+        self.AbsMap = []
 
     def moveSingle(self):
         #return relative position from prolog
