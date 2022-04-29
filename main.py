@@ -132,47 +132,47 @@ class WumpusWorld():
         else:
             cell = self.abs_map[x][y]
         if cell[0][0] == "%":
-            sensory += "confounded,"
+            sensory += "confounded-"
             sensory_arr.append("on")
         else:
-            sensory += "C,"
+            sensory += "C-"
             sensory_arr.append("off")
 
         if cell[0][1] == "=":
-            sensory += "Stench,"
+            sensory += "Stench-"
             sensory_arr.append("on")
         else:
-            sensory += "S,"
+            sensory += "S-"
             sensory_arr.append("off")
 
         if cell[0][2] == "T":
-            sensory += "Tingle,"
+            sensory += "Tingle-"
             sensory_arr.append("on")
         else:
-            sensory += "T,"
+            sensory += "T-"
             sensory_arr.append("off")
 
         if cell[2][0] == "*":
-            sensory += "Glitter,"
+            sensory += "Glitter-"
             sensory_arr.append("on")
             #pickup
             cell[2][0] == "."
         else:
-            sensory += "G,"
+            sensory += "G-"
             sensory_arr.append("off")
 
         if self.bump == "on":
-            sensory += "Bump,"
+            sensory += "Bump-"
             sensory_arr.append("on")
         else:
-            sensory += "B,"
+            sensory += "B-"
             sensory_arr.append("off")
 
         if self.scream:
-            sensory += "Scream,"
+            sensory += "Scream"
             sensory_arr.append("on")
         else:
-            sensory += "S."
+            sensory += "S"
             sensory_arr.append("off")
 
         return sensory, sensory_arr
@@ -283,7 +283,7 @@ class WumpusWorld():
             j += 1
             self.agent_abs_pos = self.move_single(self.agent_abs_pos, i)
             sensory, sensory_arr = self.get_sensory_state(self.agent_abs_pos[0], self.agent_abs_pos[1])
-            print(f"Executing action: {i}")
+            print(f"Performing action: {i}")
             list(prolog.query(f"move({i},{sensory_arr})"))
 
             if j == len(action_seq)-1:
@@ -291,7 +291,7 @@ class WumpusWorld():
             if (sensory_arr[3] == 'on'):
                 sensory, sensory_arr = self.get_sensory_state(
                     self.agent_abs_pos[0], self.agent_abs_pos[1])
-                print(f"Executing action: pickup")
+                print(f"Performing action: pickup")
                 list(prolog.query(f"move(pickup, {sensory_arr})"))
 
             # check if agent met wumpus and take required actions
