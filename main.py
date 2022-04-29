@@ -362,9 +362,9 @@ if __name__ == "__main__":
 
     WW = WumpusWorld()
     WW.print_map(WW.abs_map)
-    WW.start_agent(['turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward', 'moveforward', 'turnleft', 'moveforward', 'moveforward', 'pickup'])
-
-
+    WW.start_agent(['turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward', 'turnright', 'moveforward', 'moveforward'])
+    #WW.start_agent(['turnright', 'turnright', 'moveforward'])
+    #WW.start_agent(['moveforward', 'moveforward', 'turnright', 'moveforward', 'moveforward', 'moveforward', 'turnright', 'pickup'])
     Symbol_Confounded = ["%", "."]
     Symbol_Stench = ["=", "."]
     Symbol_Tingle = ["T", "."]
