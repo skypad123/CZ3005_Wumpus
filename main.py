@@ -14,15 +14,17 @@ class WumpusWorld():
         self.Ysize = Ysize
 
         self.confounded = "off"
-        self.glitter = False
-        self.stench = False
-        self.tingle = False
+        self.stench = "off"
+        self.tingle = "off"
+        self.glitter = "off"
+        self.bump = "off"
+        self.scream = "off"
+
         self.visited = False
         self.wumpus = False
         self.portal = False
-        self.scream = False
-        self.wall = "off"
-        self.bump = False
+        self.dead = False
+
         self.agent_abs_pos = [5, 2, 'rnorth']
         
         self.agent_state_dir = {
@@ -37,8 +39,8 @@ class WumpusWorld():
         "containsWumpus": "W",
         "containsPortal": "O",
         "wumpusAndPortal": "U",#impossible
-        "nonVisitedSafe": "s",
-        "visitedSafe": "S",
+        "non_visited": "s",
+        "visited_safe": "S",
         "none": "?",
         "abs_none": ".",
         "glitter": "*"
@@ -60,36 +62,24 @@ class WumpusWorld():
             9: {"screamOn": "@", "screamOff": "."}
         }
 
-        self.abs_map_symbols = {
-            1: {"confounded": "%", "notConfounded": "."},
-            2: {"stench": "=", "notStench": "."},
-            3: {"tingle": "T", "notTingle": "."},
-            4: {"agent": "-", "noAgent": "."},
-            5: self.agent_state_dir,
-            6: {"agent": "-", "noAgent": "."},
-            7: {"glitter": "*", "noGlitter": "."},
-            8: {"bumpOn": "B", "bumpOff": "."},
-            9: {"screamOn": "@", "screamOff": "."}
-        }
-        self.symbols_no = {
+        self.cell_symboltest = {
             1: {"confounded": 1, "notConfounded": 1, "stench": 2, "notStench": 2,
             "tingle": 3, "notTingle": 3,"agent": 4, "noAgent": 4, "center": 5, 
             "glitter": 7, "noGlitter": 7, "bumpOn": 8, "bumpOff": 8,
             "screamOn": 9, "screamOff": 9}
         }
-        #####################
+
         self.abs_map = [["#","#","#","#","#","#"],
-                       ["#",self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("containsPortal",_2 = "tingle",_4 = "tingle",_6 = "tingle",_8 = "tingle"), self.set_abs_map_symbol("containsWumpus", _2 = "stench",_4 = "stench",_6 = "stench",_8 = "stench"), self.set_abs_map_symbol("abs_none"),"#"],
-                       ["#",self.set_abs_map_symbol("containsPortal",_2 = "tingle",_4 = "tingle",_6 = "tingle",_8 = "tingle"), self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"),"#"],
-                       ["#",self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"),"#"],
-                       ["#",self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("glitter"), self.set_abs_map_symbol("containsPortal",_2 = "tingle",_4 = "tingle",_6 = "tingle",_8 = "tingle"), self.set_abs_map_symbol("abs_none"),"#"],
-                       ["#",self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("abs_none"), self.set_abs_map_symbol("containsPortal",_2 = "tingle",_4 = "tingle",_6 = "tingle",_8 = "tingle"),"#"],
+                       ["#",self.set_symbol("none",_3 = "tingle"), self.set_symbol("containsPortal",_2 = "stench"), self.set_symbol("containsWumpus",_3 = "tingle"), self.set_symbol("none",_2 = "stench"),"#"],
+                       ["#",self.set_symbol("containsPortal"), self.set_symbol("none",_3 = "tingle"), self.set_symbol("none",_2 = "stench"), self.set_symbol("none"),"#"],
+                       ["#",self.set_symbol("none"), self.set_symbol("none"), self.set_symbol("none",_3 = "tingle"), self.set_symbol("none"),"#"],
+                       ["#",self.set_symbol("none"), self.set_symbol("none",_3 = "tingle"), self.set_symbol("containsPortal"), self.set_symbol("none",_3 = "tingle"),"#"],
+                       ["#",self.set_symbol("none"), self.set_symbol("none"), self.set_symbol("none",_3 = "tingle"), self.set_symbol("containsPortal"),"#"],
                        ["#","#","#","#","#","#"]]
 
         self.wall = [["#", "#", "#"],
                      ["#", "#", "#"],
-                     ["#", "#", "#"]
-                     ]  
+                     ["#", "#", "#"]]  
 
         for i in range(self.Ysize):
             self.abs_map[0][i] = self.wall
@@ -98,16 +88,12 @@ class WumpusWorld():
             self.abs_map[j][0] = self.wall
             self.abs_map[j][-1] = self.wall
 
-        
-        samplewall = "#"  
-        #self.reset =
-        
+        #samplewall = "#"  
 
     def worldCreate(self):
         self.wall = [["#", "#", "#"],
                      ["#", "#", "#"],
-                     ["#", "#", "#"]
-                     ]
+                     ["#", "#", "#"]]
         
         TestingWorld =  [["#","#","#","#","#","#","#"],
                          ["#","T","O","W","=","O","#"],
@@ -116,7 +102,6 @@ class WumpusWorld():
                          ["#","^","s","s","T","s","#"],
                          ["#","#","#","#","#","#","#"]]
 
-        
         for row in TestingWorld:
             for col in row:
                 print(col, end=" ")
@@ -128,12 +113,6 @@ class WumpusWorld():
                         [self.symbols[7][_7], self.symbols[8][_8], self.symbols[9][_9]]]
         return cell_symbols
 
-    def set_abs_map_symbol(self, X, _1="notConfounded", _2="notStench", _3="notTingle", _4="noAgent", _6="noAgent", _7="noGlitter", _8="bumpOff", _9="screamOff"):
-        cell_symbols = [[self.abs_map_symbols[self.symbols_no[1][_1]][_1], self.abs_map_symbols[self.symbols_no[1][_2]][_2], self.abs_map_symbols[self.symbols_no[1][_3]][_3]],
-                        [self.abs_map_symbols[self.symbols_no[1][_4]][_4], self.abs_map_symbols[self.symbols_no[1]["center"]][X], self.abs_map_symbols[self.symbols_no[1][_6]][_6]],
-                        [self.abs_map_symbols[self.symbols_no[1][_7]][_7], self.abs_map_symbols[self.symbols_no[1][_8]][_8], self.abs_map_symbols[self.symbols_no[1][_9]][_9]]]
-        return cell_symbols
-
     def print_map(self, abs_map):
         print()
         for i in range(len(abs_map)):
@@ -143,106 +122,96 @@ class WumpusWorld():
                         print(cell[k][j], end=" ")
                     print(end="  ")
                 print()
-            print()
-
-    def actions(action, abs_map):
-        action_tuple = ("shoot", "moveforward", "turnleft", "turnright", "pickup")
-        
-        
-    def moveSingle(self, src, dst, new_x, new_y, abs_map):
-        #return relative position from prolog
-        #translate to absolute mapping
-        #get state property python side
-        #assert
-        print("move")
-
-    def reset():
-        print("reset call reborn and feedback loop")
+            print()   
 
     def get_sensory_state(self, x, y):
         sensory_arr = []
         sensory = ""
-        if self.bump:
+        if self.bump == "on":
             cell = self.wall
         else:
             cell = self.abs_map[x][y]
         if cell[0][0] == "%":
-            sensory += "confounded-"
+            sensory += "confounded,"
             sensory_arr.append("on")
         else:
-            sensory += "C-"
+            sensory += "C,"
             sensory_arr.append("off")
 
         if cell[0][1] == "=":
-            sensory += "Stench-"
+            sensory += "Stench,"
             sensory_arr.append("on")
         else:
-            sensory += "S-"
+            sensory += "S,"
             sensory_arr.append("off")
 
         if cell[0][2] == "T":
-            sensory += "Tingle-"
+            sensory += "Tingle,"
             sensory_arr.append("on")
         else:
-            sensory += "T-"
+            sensory += "T,"
             sensory_arr.append("off")
 
         if cell[2][0] == "*":
-            sensory += "Glitter-"
+            sensory += "Glitter,"
             sensory_arr.append("on")
-            cell[2][0] == "."  # remove glitter from map
+            #pickup
+            cell[2][0] == "."
         else:
-            sensory += "G-"
+            sensory += "G,"
             sensory_arr.append("off")
 
-        if self.bump:
-            sensory += "Bump-"
+        if self.bump == "on":
+            sensory += "Bump,"
             sensory_arr.append("on")
         else:
-            sensory += "B-"
+            sensory += "B,"
             sensory_arr.append("off")
 
         if self.scream:
-            sensory += "Scream-"
+            sensory += "Scream,"
             sensory_arr.append("on")
         else:
-            sensory += "S"
+            sensory += "S."
             sensory_arr.append("off")
 
         return sensory, sensory_arr
-    def move_agent(self, agent_location, action, abs=True):
+
+    def move_single(self, agent_location, action, abs=True):
+
+        action_tuple = ("shoot", "moveforward", "turnleft", "turnright", "pickup")
 
         if action == 'shoot':
-            self.scream = True
+            self.scream = "on"
 
         if action != 'shoot':
-            self.scream = False
+            self.scream = "off"
 
         if action != 'moveforward':
-            self.bump = False
+            self.bump = "off"
 
         if action == 'moveforward':
             if agent_location[2] == 'rsouth':
-                if agent_location[0] + 1 < len(self.map) and abs and self.map[agent_location[0] + 1][agent_location[1]] == self.wall:
-                    self.bump = True
+                if agent_location[0] + 1 < len(self.abs_map) and abs and self.abs_map[agent_location[0] + 1][agent_location[1]] == self.wall:
+                    self.bump = "on"
                 else:
                     agent_location[0] += 1
 
             elif agent_location[2] == 'rnorth':
-                if (agent_location[0] - 1 >= 0 and abs and self.map[agent_location[0] - 1][agent_location[1]] == self.wall):
-                    self.bump = True
+                if (agent_location[0] - 1 >= 0 and abs and self.abs_map[agent_location[0] - 1][agent_location[1]] == self.wall):
+                    self.bump = "on"
                 else:
                     agent_location[0] -= 1
 
             elif agent_location[2] == 'reast':
-                if (agent_location[1]+1 < len(self.map[0]) and abs and self.map[agent_location[0]][agent_location[1]+1] == self.wall):
-                    self.bump = True
+                if (agent_location[1]+1 < len(self.abs_map[0]) and abs and self.abs_map[agent_location[0]][agent_location[1]+1] == self.wall):
+                    self.bump = "on"
                 else:
                     agent_location[1] += 1
 
             elif agent_location[2] == 'rwest':
-                if (agent_location[1]-1 >= 0 and abs and self.map[agent_location[0]][agent_location[1] - 1] == self.wall):
-                    self.bump = True
+                if (agent_location[1]-1 >= 0 and abs and self.abs_map[agent_location[0]][agent_location[1] - 1] == self.wall):
+                    self.bump = "on"
                 else:
                     agent_location[1] -= 1
 
@@ -267,7 +236,20 @@ class WumpusWorld():
                 agent_location[2] = 'rsouth'
 
         return agent_location
-    
+
+    # def get_nesw(self, x, y):
+    #     nesw_list = [(x+1, y), (x, y+1), (x-1, y), (x, y-1)]
+    #     return nesw_list
+        
+    def update_rel_map(self, tail, prolog):
+        n = len(self.rel_map)
+        if not self.bump == "off" and tail:
+            for i in range(n):
+                self.rel_map[i].insert(0, self.set_symbol('none'))
+                self.rel_map[i].append(self.set_symbol('none'))
+            self.rel_map.append([self.set_symbol('none')]*(n+2))
+            self.rel_map.insert(0, [self.set_symbol('none')]*(n+2))
+
     def start_agent(self, action_seq):
         prolog = Prolog()
         prolog.consult("agent_kbase.pl")
@@ -277,36 +259,66 @@ class WumpusWorld():
         sensory, sensory_arr = self.get_sensory_state(self.agent_abs_pos[0], self.agent_abs_pos[1])
         sensory_arr[0] = "on"
 
-        print("Action sequence: ", action_seq)
-        print(sensory_arr)
+        # print("Action sequence: ", action_seq)
+        # print(sensory_arr)
+
         list(prolog.query(f"reposition({sensory_arr})"))
         
         list(prolog.query("retractall(current(_,_,_))"))
         prolog.asserta("current(5,2,rnorth)")
         
         currXYD = list(prolog.query("current(X,Y,D)"))
-        
-        if bool(prolog.query("explore(L)")):
+
+        #print(currXYD)
+        if bool(prolog.query("explore({action_seq})")):
             print("safe")
         
         self.reposition(currXYD)
-        self.print_map(self.relative_map)
-        # returned = False
-        # start_explore = True
-        
-        # while(not returned and start_explore):
-            
-        #     if not bool(prolog.query("explore(L)")):
-        #         explore = False
-        #         break
+        self.print_map(self.rel_map)
+
+        j = -1
+        tail = False
+        for i in action_seq:
+            print("move")
+            j += 1
+            self.agent_abs_pos = self.move_single(self.agent_abs_pos, i)
+            sensory, sensory_arr = self.get_sensory_state(self.agent_abs_pos[0], self.agent_abs_pos[1])
+            print(f"Executing action: {i}")
+            list(prolog.query(f"move({i},{sensory_arr})"))
+
+            if j == len(action_seq)-1:
+                tail = True
+            if (sensory_arr[3] == 'on'):
+                sensory, sensory_arr = self.get_sensory_state(
+                    self.agent_abs_pos[0], self.agent_abs_pos[1])
+                print(f"Executing action: pickup")
+                list(prolog.query(f"move(pickup, {sensory_arr})"))
+
+            # check if agent met wumpus and take required actions
+            if self.dead:
+                self.start_agent()
+
+            if self.confounded == "on":
+                # call reposition function
+                list(prolog.query(f"reposition({sensory_arr})"))
+                currXYD = list(prolog.query('current(X,Y,D)'))
+                self.reposition(currXYD)
+                print("reposition successful")
+
+            self.update_rel_map(tail, prolog)
+            print('Percepts: ', sensory)
+            self.print_map(self.rel_map)
+            if(self.bump == "on"):
+                self.bump = "off"
+            print()
 
     def reposition(self, curr):
         self.bump = "off"
         self.scream = "off"
         self.confounded = "off"
-        self.agent_abs_pos = [5, 2, "rnorth"]  # make it random
-        self.agent_relative = [
-            (curr[0]["X"], curr[0]["Y"]), curr[0]["D"]]
+        self.agent_abs_pos = [5, 2, "rnorth"]
+        self.agent_relative = [(curr[0]["X"], curr[0]["Y"]), curr[0]["D"]]
+        
         if self.agent_relative[1] == "rnorth":
             dir = "north"
         elif self.agent_relative[1] == "reast":
@@ -315,24 +327,19 @@ class WumpusWorld():
             dir = "south"
         elif self.agent_relative[1] == "rwest":
             dir = "west"
-        self.relative_map = [
-            [self.set_symbol("none"), self.set_symbol("none"), self.set_symbol("none")],
+
+        self.rel_map = [[self.set_symbol("none"), self.set_symbol("none"), self.set_symbol("none")],
             [self.set_symbol("none"), self.set_symbol(dir, _1="confounded", _4="agent",_6="agent"), self.set_symbol("none")],
             [self.set_symbol("none"), self.set_symbol("none"), self.set_symbol("none")]]
     
-    def explore():
+    def explore(actionseq):
         list(prolog.query("reborn"))
         path = list(prolog.query("explore([L])"))
-        print("repeating call this to get the explore(L) to confirm generated path correctness")
-        
-    def memory(actions):
-        print("ask from prolog whther is in state confundus")
+        print("testing")
         
     def main():
         prolog = Prolog()
         prolog.consult("agent_kbase.pl")
-
-
 
 if __name__ == "__main__":
 
@@ -346,15 +353,10 @@ if __name__ == "__main__":
    
     #testing = list(prolog.query("faster(What, dog)"))
     #print(testing)
-
-    
     
     while not isGameEnd:
         #print("Feedback")
         break
-
-    x = 7
-    y = 6
     
     #TestingWorld = [[0]*x]*y
 
@@ -363,7 +365,6 @@ if __name__ == "__main__":
     WW.start_agent(['turnright', 'moveforward', 'moveforward', 'moveforward', 'moveforward', 'moveforward', 'turnleft', 'moveforward', 'moveforward', 'pickup'])
 
 
-    
     Symbol_Confounded = ["%", "."]
     Symbol_Stench = ["=", "."]
     Symbol_Tingle = ["T", "."]
@@ -376,8 +377,6 @@ if __name__ == "__main__":
     Symbol_Bump = ["B", "."]
     Symbol_Scream = ["@", "."]
     
-    
-
     #for count, cellNo in enumerate(cells, start=1):
         #print(count, cellNo)
 

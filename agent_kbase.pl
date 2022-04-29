@@ -17,7 +17,7 @@
 reborn :-
     reset_state_memory,
     reset_questitem,
-    set_current(0,0,rnorth),
+    set_current(5,2,rnorth),
     set_visited(0,0),
     set_safe(0,0),
     say("Agent has been reborn in new envrionment!").
@@ -26,7 +26,7 @@ reborn :-
 reposition(L):-
     say("Agent has been teleport!"),
     reset_state_memory,
-    set_current(0,0,rnorth),
+    set_current(5,2,rnorth),
     set_visited(0,0), 
     set_safe(0,0),
     /*process_confunded(L),*/
